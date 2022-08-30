@@ -1,0 +1,13 @@
+---
+- name: Install Apache (Debian Based Servers)
+  apt:
+    name:
+      - apache2
+    state: latest
+  when: ansible_os_family == 'Debian'
+
+- name: Allow Apache Traffic Through UFW
+  community.general.ufw:
+    rule: allow
+    name: Apache Full
+    log: yes

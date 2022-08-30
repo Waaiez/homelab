@@ -1,0 +1,27 @@
+---
+- hosts: all
+  become: true
+
+  handlers:
+  - name: restart ssh
+    service: name=sshd state=restarted
+
+  tasks:
+      - include: tasks/os_configuration/update_system.yml
+      - include: tasks/os_configuration/security.yml
+      - include: tasks/application_installs/install_neofetch.yml
+  
+# - hosts: oracle
+#   become: true
+
+#   tasks:
+#       - include: tasks/application_installs/install_apache.yml
+
+#
+
+# - hosts: all
+#   become: true
+
+#   tasks:
+#         - name: Reboot server (All Servers)
+#           reboot:

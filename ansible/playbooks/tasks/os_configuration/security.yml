@@ -1,0 +1,77 @@
+---
+- name: Enable UFW. (All Servers)
+  community.general.ufw:
+    state: enabled
+
+- name: Enable UFW Logging (All Servers)
+  community.general.ufw:
+    logging: 'on'
+
+- name: Enable UFW Rate Limit (All Servers)
+  community.general.ufw:
+    rule: limit
+    port: ssh
+    proto: tcp
+    log: yes
+
+- name: Allow SSH Connections Through UFW (All Servers)
+  community.general.ufw:
+    rule: allow
+    name: OpenSSH
+    
+- name: Add a user account. (All Servers)
+  user:
+    name: waaiez
+    state: present
+
+- name: Give new user sudo rights. (All Servers)
+  lineinfile:
+    dest: /etc/sudoers
+    regexp: '^waaiez'
+    line: 'waaiez ALL=(ALL) NOPASSWD: ALL'
+    state: present
+    validate: 'visudo -cf %s'
+
+- name: Update SSH configuration to be more secure. (All Servers)
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+    validate: 'sshd -t -f %s'
+  with_items:
+    - regexp: "^PasswordAuthentication"
+      line: "PasswordAuthentication no"
+    - regexp: "^PermitRootLogin"
+      line: "PermitRootLogin no"
+  notify: restart ssh
+  
+- name: Install unattended upgrades package. (Debian Based Servers)
+  apt:
+    name: unattended-upgrades
+    state: present
+  when: ansible_os_family == 'Debian'
+
+- name: Copy unattended-upgrades configuration files. (Debian Based Servers)
+  template:
+    src: "../../templates/{{ item }}.j2"
+    dest: "/etc/apt/apt.conf.d/{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - 20auto-upgrades
+    - 50unattended-upgrades
+  when: ansible_os_family == 'Debian'
+
+- name: Install fail2ban. (Debian Based Servers)
+  apt:
+    name: fail2ban
+    state: present
+  when: ansible_os_family == 'Debian'
+
+- name: Ensure fail2ban is running and enabled on boot. (All Servers)
+  service:
+    name: fail2ban
+    state: started
+    enabled: yes

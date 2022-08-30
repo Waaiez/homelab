@@ -1,0 +1,6 @@
+---
+- name: Install Neofetch (All Systems)
+  package:
+    name:
+      - neofetch
+    state: latest
